@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model SurveyVersion {
+  id          Int      @id @default(autoincrement())
+  version     String   @unique  // e.g., "v1.0"
+  group       String   // "Teacher", etc.
+  questions   Json     // Array of question objects with text, type, options, branching
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  description String?
+  isActive    Boolean  @default(true)
+  maxResponses Int?    // Optional limit per version
+  responses   SurveyResponse[]
+
+  @@index([group, isActive])
+}
+
+model InvitedUser {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  group           String
+  invitedAt       DateTime @default(now())
+  hasTaken        Boolean  @default(false)
+  otpCode         String?
+  otpExpiry       DateTime?
+  consented       Boolean  @default(false)
+  remindersSent   Int      @default(0)
+  lastReminderAt  DateTime?
+
+  @@index([group])
+  @@index([email, hasTaken])
+}
+
+model SurveyResponse {
+  id             Int      @id @default(autoincrement())
+  email          String
+  group          String
+  versionId      Int
+  responses      Json     // e.g., { "q1": "Often", "q2_likert": 4 }
+  submittedAt    DateTime @default(now())
+  completionTime Int?     // in seconds
+  partial        Boolean  @default(false)
+  userAgent      String?  // for analytics
+  deviceType     String?  // mobile/desktop/tablet
+  ipAddressHash  String?  // hashed IP for privacy-compliant analytics
+
+  version        SurveyVersion @relation(fields: [versionId], references: [id])
+
+  @@index([email, group, versionId])
+  @@index([submittedAt])
+  @@index([group, partial])
+}
+
+model AdminUser {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String   // bcrypt hashed
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  lastLogin DateTime?
+
+  @@index([email])
+}
