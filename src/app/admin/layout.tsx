@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { BarChart3, Users, FileText, Settings, LogOut, User } from 'lucide-react';
+import { BarChart3, Users, FileText, Settings, LogOut, User, Microscope } from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -69,6 +69,9 @@ export default function AdminLayout({
                   </TabsTrigger>
                   <TabsTrigger value="resubmissions" asChild>
                     <Link href="/admin/resubmissions">Resubmissions</Link>
+                  </TabsTrigger>
+                  <TabsTrigger value="testing" asChild>
+                    <Link href="/admin/testing">Testing</Link>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

@@ -24,3 +24,48 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  /* Fix button transparency issues and add borders */
+  button[class*="outline"] {
+    background-color: white !important;
+    border: 1.5px solid #d1d5db !important;
+  }
+  
+  button[class*="secondary"] {
+    background-color: white !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  button[class*="ghost"] {
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+  }
+  
+  button[class*="ghost"]:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-color: #e5e7eb !important;
+  }
+  
+  /* Add subtle border to default buttons too */
+  button[class*="default"]:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]) {
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  /* Fix dropdown menu transparency */
+  [data-radix-dropdown-menu-content],
+  [data-radix-popper-content-wrapper],
+  [role="menu"] {
+    background-color: white !important;
+    border: 1.5px solid #d1d5db !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+  
+  [role="menuitem"] {
+    background-color: white !important;
+  }
+  
+  [role="menuitem"]:hover {
+    background-color: #f3f4f6 !important;
+  }
+}
