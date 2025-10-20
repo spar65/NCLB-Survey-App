@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSessionFromRequest } from '@/lib/auth';
 import { hashEmail } from '@/lib/crypto';
+import { getProductionMode } from '@/lib/production-mode';
 import ExcelJS from 'exceljs';
 
 const ExportSchema = z.object({
@@ -54,8 +55,18 @@ export async function POST(request: NextRequest) {
 
     const { format, filters, anonymize, includeMetadata } = validation.data;
 
+    // ✅ CRITICAL: Automatically exclude test accounts in production mode
+    const productionMode = await getProductionMode();
+    console.log('📊 Export mode:', productionMode ? 'Production (test accounts excluded)' : 'Development');
+
     // Build query filters
     const where: any = {};
+    
+    // ✅ CRITICAL: In production, ALWAYS exclude test accounts (no override possible)
+    if (productionMode) {
+      where.email = { not: { endsWith: '@example.com' } };
+      console.log('🔒 Production mode: Test accounts automatically excluded');
+    }
     
     if (filters?.groups && filters.groups.length > 0) {
       where.group = { in: filters.groups };

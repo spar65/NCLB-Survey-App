@@ -23,7 +23,7 @@ export default function TestSurveyPage() {
   const testUsers = [
     { email: 'teacher@example.com', group: 'Teachers', token: createToken('teacher@example.com') },
     { email: 'student@example.com', group: 'Students', token: createToken('student@example.com') },
-    { email: 'admin@example.com', group: 'Administrators', token: createToken('admin@example.com') },
+    { email: 'admin_survey@example.com', group: 'Administrators', token: createToken('admin_survey@example.com') },
     { email: 'it@example.com', group: 'IT_Admins', token: createToken('it@example.com') },
   ];
 
