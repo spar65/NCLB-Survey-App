@@ -12,6 +12,17 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
+  // Initialize system settings
+  const systemSettings = await prisma.systemSettings.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      productionMode: false,
+    },
+  });
+
+  console.log('✅ System settings initialized:', systemSettings.productionMode ? 'Production' : 'Development', 'mode');
+
   // Create admin user
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
   

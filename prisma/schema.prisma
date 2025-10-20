@@ -72,3 +72,12 @@ model AdminUser {
 
   @@index([email])
 }
+
+model SystemSettings {
+  id             Int      @id @default(autoincrement())
+  productionMode Boolean  @default(false)
+  toggledAt      DateTime?
+  toggledBy      String?  // Admin email who activated production mode
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
