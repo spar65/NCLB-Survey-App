@@ -35,10 +35,23 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [productionMode, setProductionMode] = useState(false);
+  const [isTogglingProduction, setIsTogglingProduction] = useState(false);
 
   useEffect(() => {
     loadDashboardStats();
+    checkProductionMode();
   }, []);
+
+  const checkProductionMode = async () => {
+    try {
+      const response = await fetch('/api/admin/toggle-production');
+      const data = await response.json();
+      setProductionMode(data.productionMode);
+    } catch (error) {
+      console.error('Failed to check production mode:', error);
+    }
+  };
 
   const loadDashboardStats = async () => {
     try {
@@ -59,6 +72,55 @@ export default function AdminDashboard() {
       setError(error instanceof Error ? error.message : 'Failed to load dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleToggleProduction = async () => {
+    const confirmation = prompt(
+      '⚠️ CRITICAL: Switch to Production Mode?\n\n' +
+      'This will:\n' +
+      '• DELETE all survey responses\n' +
+      '• RESET all invited users\n' +
+      '• BLOCK test accounts from surveys\n' +
+      '• This action CANNOT be undone via UI\n\n' +
+      'Type "PRODUCTION" to confirm:'
+    );
+
+    if (confirmation !== 'PRODUCTION') {
+      alert('❌ Production mode activation cancelled');
+      return;
+    }
+
+    setIsTogglingProduction(true);
+    try {
+      const response = await fetch('/api/admin/toggle-production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmation: 'PRODUCTION' }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to activate production mode');
+      }
+
+      alert(
+        `✅ PRODUCTION MODE ACTIVATED!\n\n` +
+        `Deleted: ${data.deletedResponses} responses\n` +
+        `Reset: ${data.resetUsers} users\n` +
+        `Activated by: ${data.activatedBy}\n\n` +
+        `The system is now ready for real data collection.`
+      );
+
+      setProductionMode(true);
+      loadDashboardStats(); // Refresh to show empty stats
+
+    } catch (error) {
+      alert(`❌ Failed to activate production mode: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsTogglingProduction(false);
     }
   };
 
@@ -146,6 +208,51 @@ export default function AdminDashboard() {
             Export Data
           </Button>
         </div>
+
+        {/* Production Mode Indicator */}
+        {!productionMode ? (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertDescription className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-orange-800 font-semibold">⚠️ DEVELOPMENT MODE ACTIVE</span>
+                <span className="text-orange-600 text-sm">
+                  - Test accounts can access surveys and save data
+                </span>
+              </div>
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={handleToggleProduction}
+                disabled={isTogglingProduction}
+              >
+                {isTogglingProduction ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Activating...
+                  </>
+                ) : (
+                  '🚀 Switch to Production Mode'
+                )}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            <Alert className="border-green-200 bg-green-50">
+              <AlertDescription className="flex items-center gap-2">
+                <span className="text-green-800 font-semibold">✅ PRODUCTION MODE ACTIVE</span>
+                <span className="text-green-600 text-sm">
+                  - Test accounts blocked | Real data collection enabled
+                </span>
+              </AlertDescription>
+            </Alert>
+            <Alert className="border-primary/20 bg-primary/5">
+              <AlertDescription className="text-sm text-primary/90">
+                ℹ️ Showing production data only. Test accounts automatically excluded from all statistics.
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
