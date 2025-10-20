@@ -200,11 +200,28 @@ export default function AdminInvitesPage() {
     try {
       console.log('🔄 Enabling ONE resubmission for:', email.replace(/(.{2}).*(@.*)/, '$1***$2'));
 
-      // For development, directly update database status
-      // Reset hasTaken to 0 to allow one more submission
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Call the actual API endpoint
+      const response = await fetch('/api/admin/allow-resubmission', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          email,
+          reason: 'Admin-initiated resubmission from invites page',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to enable resubmission');
+      }
+
+      console.log('✅ Resubmission enabled successfully');
       
-      alert(`✅ One-Time Resubmission Approved!\n\nParticipant: ${email.replace(/(.{2}).*(@.*)/, '$1***$2')}\nGroup: ${group}\n\n🎯 What happens next:\n• User can now retake the survey once\n• After resubmission, they'll need approval again\n• All historical responses are preserved\n\n⚠️ Remember: This is one-time permission only!`);
+      alert(`✅ One-Time Resubmission Approved!\n\nParticipant: ${email.replace(/(.{2}).*(@.*)/, '$1***$2')}\nGroup: ${group}\n\n🎯 What happens next:\n• User can now retake the survey once\n• After resubmission, they'll need approval again\n• All historical responses are preserved (${data.user?.previousSubmissions || 0} previous submissions)\n\n⚠️ Remember: This is one-time permission only!`);
       
       // Reload invites to show updated status
       loadInvites();

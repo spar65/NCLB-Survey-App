@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,8 @@ interface SurveyVersion {
   description: string;
 }
 
-export default function SurveyPage({ params }: { params: { token: string } }) {
+export default function SurveyPage({ params }: { params: Promise<{ token: string }> }) {
+  const resolvedParams = use(params);
   const [surveyVersion, setSurveyVersion] = useState<SurveyVersion | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [responses, setResponses] = useState<Record<string, string>>({});
@@ -50,7 +51,7 @@ export default function SurveyPage({ params }: { params: { token: string } }) {
 
   useEffect(() => {
     loadSurveyFromDatabase();
-  }, [params.token]);
+  }, [resolvedParams.token]);
 
   const loadSurveyFromDatabase = async () => {
     try {
@@ -59,15 +60,13 @@ export default function SurveyPage({ params }: { params: { token: string } }) {
       // Safely decode email from token
       let decodedEmail: string;
       try {
-        decodedEmail = atob(params.token);
+        // URL decode first in case the token was URL encoded
+        const urlDecoded = decodeURIComponent(resolvedParams.token);
+        // Then base64 decode
+        decodedEmail = atob(urlDecoded);
       } catch (e) {
         console.error('❌ Token decode error:', e);
-        // Try URL decoding as fallback
-        try {
-          decodedEmail = decodeURIComponent(params.token);
-        } catch (e2) {
-          throw new Error('Invalid access token format');
-        }
+        throw new Error('Invalid access token format');
       }
       
       setEmail(decodedEmail);

@@ -51,8 +51,9 @@ async function main() {
   const testUsers = [
     { email: 'teacher@example.com', group: 'Teachers' },
     { email: 'student@example.com', group: 'Students' },
-    { email: 'admin@example.com', group: 'Administrators' },
+    { email: 'admin_survey@example.com', group: 'Administrators' }, // Survey participant, NOT site admin
     { email: 'it@example.com', group: 'IT_Admins' },
+    { email: 'spehargreg@yahoo.com', group: 'Teachers' }, // Real user for testing
   ];
 
   for (const user of testUsers) {
