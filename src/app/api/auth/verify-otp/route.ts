@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { validateOTP } from '@/lib/crypto';
 import { createSurveySessionToken } from '@/lib/auth';
+import { canAccessSurvey } from '@/lib/production-mode';
 
 const VerifyOTPSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -34,6 +35,16 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, code, consented } = validation.data;
+
+    // ✅ CRITICAL: Check production mode and site admin restrictions
+    const access = await canAccessSurvey(email);
+    if (!access.allowed) {
+      console.log('❌ Survey access blocked:', email.replace(/(.{2}).*(@.*)/, '$1***$2'), '-', access.reason);
+      return NextResponse.json(
+        { error: access.reason },
+        { status: 403 }
+      );
+    }
 
     if (!consented) {
       console.log('❌ Consent not provided for:', email.replace(/(.{2}).*(@.*)/, '$1***$2'));

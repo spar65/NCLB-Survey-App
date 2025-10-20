@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { generateOTP } from '@/lib/crypto';
 import { sendOTPEmail } from '@/lib/resend';
+import { canAccessSurvey } from '@/lib/production-mode';
 
 const RequestOTPSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -32,6 +33,16 @@ export async function POST(request: NextRequest) {
     }
 
     const { email } = validation.data;
+
+    // ✅ CRITICAL: Check production mode and site admin restrictions
+    const access = await canAccessSurvey(email);
+    if (!access.allowed) {
+      console.log('❌ Survey access blocked:', email.replace(/(.{2}).*(@.*)/, '$1***$2'), '-', access.reason);
+      return NextResponse.json(
+        { error: access.reason },
+        { status: 403 }
+      );
+    }
 
     // Check if user is whitelisted
     const invitedUser = await prisma.invitedUser.findUnique({

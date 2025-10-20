@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { hashEmail } from '@/lib/crypto';
+import { canAccessSurvey } from '@/lib/production-mode';
 
 const SubmitSurveySchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -36,6 +37,16 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, surveyVersionId, responses, completionTime, partial, userAgent, deviceType } = validation.data;
+
+    // ✅ CRITICAL: Check production mode and site admin restrictions
+    const access = await canAccessSurvey(email);
+    if (!access.allowed) {
+      console.log('❌ Survey access blocked:', email.replace(/(.{2}).*(@.*)/, '$1***$2'), '-', access.reason);
+      return NextResponse.json(
+        { error: access.reason },
+        { status: 403 }
+      );
+    }
 
     // Verify user exists and has consented
     const user = await prisma.invitedUser.findUnique({
